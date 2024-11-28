@@ -16,20 +16,13 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    inputmethodcontroller/inputmethodmgr.cpp \
-    languagelayoutmgr/langeuagelayout.cpp \
     main.cpp \
     mainwindow.cpp \
-    virtualkeyboard/virtualkeyboard.cpp
 
 HEADERS += \
-    inputmethodcontroller/inputmethodmgr.h \
-    languagelayoutmgr/langeuagelayout.h \
     mainwindow.h \
-    virtualkeyboard/virtualkeyboard.h
 
 FORMS += \
-    languagelayoutmgr/keyboarddialog.ui \
     mainwindow.ui
 
 # Default rules for deployment.
@@ -39,3 +32,6 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 
 include($$PWD/keyboardbutton/keyboardbutton.pri)
+include($$PWD/virtualkeyboard/virtualkeyboard.pri)
+include($$PWD/languagelayout/languagelayout.pri)
+include($$PWD/inputmethodcontroller/inputmethodmgr.pri)

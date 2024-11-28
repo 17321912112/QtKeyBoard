@@ -2,21 +2,20 @@
 
 #include "inputmethodcontroller/inputmethodmgr.h"
 
+
 class KeyBoardButton::CPrivate
 {
 public:
-    CPrivate(KeyBoardButton* parent);
+    CPrivate(KeyBoardButton* parent)
+        : mParent(parent)
+    {
+
+    }
     void InitUi();
 
     KeyBoardButton* mParent;
     KeyBoard::KeyType mKey;
-    bool mIsPressed;
 };
-KeyBoardButton::CPrivate::CPrivate(KeyBoardButton* parent)
-    :mParent(parent)
-{
-
-}
 
 void KeyBoardButton::CPrivate::InitUi()
 {
@@ -28,7 +27,8 @@ KeyBoardButton::KeyBoardButton(QWidget* parent)
     :QPushButton(parent)
     ,md(new CPrivate(this))
 {
-
+    InitUI();
+    // InitConnect();
 }
 
 
@@ -44,17 +44,52 @@ int KeyBoardButton::GetKey()
 
 void KeyBoardButton::InitUI()
 {
-    // 按下时候的样式
-    connect(this, &QPushButton::pressed, [this]() {
-        md->mIsPressed = true;
-        emit KeyPressed(md->mKey);
-        // 颜色加深
-        this->setStyleSheet("background-color: rgb(255, 255, 255);");
-    });
+    this->setStyleSheet("background-color: rgb(255, 255, 255);");
+    // 设置字体占满按钮空间
+    this->setFont(QFont("Microsoft YaHei", 15, QFont::Bold));
+}
 
-    connect(this, &QPushButton::released, [this]() {
-        md->mIsPressed = false;
-        emit KeyReleased(md->mKey);
-        this->setStyleSheet("background-color: rgb(255, 255, 255);");
-    });
+void KeyBoardButton::InitConnect()
+{
+    connect(this, &QPushButton::clicked, this, &KeyBoardButton::SlotKeyClicked);
+}
+
+void KeyBoardButton::SlotKeyClicked()
+{
+    int keyCode = GetKey();
+    KeyBoard::ClickKey(keyCode);
+}
+
+void KeyBoardButton::SlotCapsSwitch(bool state)
+{
+    if (this->text().size() == 1)
+    {
+        QChar ch = QChar(this->text().front());
+        if (ch.isLower())
+        {
+            this->setText(ch.toUpper());
+        } else if (ch.isUpper())
+        {
+            this->setText(ch.toLower());
+        } else {
+
+        }
+    }
+}
+
+void KeyBoardButton::SlotShiftSwitch(bool state)
+{
+    if (this->text().size() == 1)
+    {
+        QChar ch = QChar(this->text().front());
+        if (ch.isLower())
+        {
+            this->setText(ch.toUpper());
+        } else if (ch.isUpper())
+        {
+            this->setText(ch.toLower());
+        } else {
+
+        }
+    }
 }

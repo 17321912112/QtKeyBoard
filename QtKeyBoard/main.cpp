@@ -6,6 +6,9 @@
 #include <QScreen>
 #include <QTextEdit>
 #include <QWindow>
+#include <QInputMethodEvent>
+#include <QList>
+#include <QDebug>
 #include "virtualkeyboard/virtualkeyboard.h"
 #include "keyboardbutton.h"
 
@@ -14,36 +17,23 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
+    QWidget widget;
+    QMainWindow m;
+
 #ifdef TEST
     // 测试代码
-    QWidget widget;
     QVBoxLayout *layout = new QVBoxLayout(&widget);
     layout->addWidget(new QLineEdit);
     layout->addWidget(new QTextEdit);
     layout->addWidget(new QLineEdit);
     widget.show();
 
-    QObject::connect(qApp->inputMethod(), &QInputMethod::cursorRectangleChanged,
-                     VirtualKeyBoard::GetInstance(), [](){
-        QWindow *focusWindow = qApp->focusWindow();
-        if (focusWindow && qApp->focusWidget() && !VirtualKeyBoard::GetInstance()->isVisible()) {
-            QRect rect = qApp->inputMethod()->cursorRectangle().toRect().translated(focusWindow->position());
-			QPoint pos = rect.bottomLeft() + QPoint(0, 5);
-            QScreen *screen = qApp->screenAt(pos);
-			if (screen == Q_NULLPTR)
-				screen = qApp->primaryScreen();
+    VirtualKeyBoard *keyBoard = VirtualKeyBoard::GetInstance();
 
-            if (pos.x() + VirtualKeyBoard::GetInstance()->width() > screen->geometry().width())
-                pos.setX(screen->geometry().width() - VirtualKeyBoard::GetInstance()->width());
-            if (pos.y() + VirtualKeyBoard::GetInstance()->height() > screen->geometry().height())
-                pos.setY(screen->geometry().height() - VirtualKeyBoard::GetInstance()->height());
+    keyBoard->InstallKeyBoard(&a);
 
-            VirtualKeyBoard::GetInstance()->move(pos);
-            VirtualKeyBoard::GetInstance()->show();
-        }
-    });
+
 #endif
-    MainWindow w;
-    w.show();
+
     return a.exec();
 }
