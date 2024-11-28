@@ -16,9 +16,16 @@ public:
 
     void SetCurrentLanguage(QString language); // TODO
 
+protected:
+    void showEvent(QShowEvent *event);
+
 signals:
     void CapsLockSwitched(bool state); // 大小写布局切换
     void ShiftSwitched(bool state);    // Shift切换
+
+public slots:
+    void SlotCapsSwitch(void);
+    void SlotShiftSwitch(void);
 
 private:
     class CPrivate;
