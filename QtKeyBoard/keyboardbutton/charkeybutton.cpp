@@ -10,18 +10,18 @@ CharKeyButton::CharKeyButton(QWidget* parent)
 
 }
 
-void CharKeyButton::SlotKeyClicked()
-{
-    int keyCode = GetKey();
-    KeyBoard::ClickKey(keyCode);
-}
+// void CharKeyButton::SlotKeyClicked()
+// {
+//     int keyCode = GetKey();
+//     KeyBoard::ClickKey(keyCode);
+// }
 
-void CharKeyButton::SlotCapsSwitch(bool state)
+void CharKeyButton::CapsSwitch(bool state)
 {
   
 }
 
-void CharKeyButton::SlotShiftSwitch(bool state)
+void CharKeyButton::ShiftSwitch(bool state)
 {
     QChar ch = text().front();
     if (state)
@@ -37,5 +37,15 @@ void CharKeyButton::SlotShiftSwitch(bool state)
         {
             setText(KeyBoard::ShiftMapRevert[ch]);
         }
+    }
+}
+
+
+void CharKeyButton::ResetKey()
+{
+    QChar ch = GetKey();
+    if (KeyBoard::ShiftMapRevert.contains(ch))
+    {
+        setText(KeyBoard::ShiftMapRevert[ch]);
     }
 }

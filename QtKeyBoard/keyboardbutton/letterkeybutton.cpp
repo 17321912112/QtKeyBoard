@@ -11,48 +11,44 @@ LetterKeyButton::LetterKeyButton(QWidget* parent)
 
 }
 
-void LetterKeyButton::SlotKeyClicked()
-{
-    int keyCode = GetKey();
-    KeyBoard::ClickKey(keyCode);
-}
+// void LetterKeyButton::SlotKeyClicked()
+// {
+//     int keyCode = GetKey();
+//     KeyBoard::ClickKey(keyCode);
+// }
 
-void LetterKeyButton::SlotCapsSwitch(bool state)
+void LetterKeyButton::CapsSwitch(bool state)
 {
-    QChar ch = GetKey();
-    if (state)
+    Q_UNUSED(state);
+    QChar ch = text().front();
+    if (ch.isUpper())
     {
-        if (ch.isLower())
-        {
-            ch = ch.toUpper();
-        }
+        ch = ch.toLower();
     }
-    else
+    else if (ch.isLower())
     {
-        if (ch.isUpper())
-        {
-            ch = ch.toLower();
-        }
+        ch = ch.toUpper();
     }
     setText(ch);
 }
 
-void LetterKeyButton::SlotShiftSwitch(bool state)
+void LetterKeyButton::ShiftSwitch(bool state)
 {
-    QChar ch = GetKey();
-    if (state)
+    Q_UNUSED(state);
+    QChar ch = text().front();
+    if (ch.isUpper())
     {
-        if (ch.isLower())
-        {
-            ch = ch.toUpper();
-        }
+        ch = ch.toLower();
     }
-    else
+    else if (ch.isLower())
     {
-        if (ch.isUpper())
-        {
-            ch = ch.toLower();
-        }
+        ch = ch.toUpper();
     }
     setText(ch);
+}
+
+void LetterKeyButton::ResetKey()
+{
+    QChar ch = GetKey();
+    setText(ch.toLower());
 }

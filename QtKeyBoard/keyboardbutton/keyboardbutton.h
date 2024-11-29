@@ -12,8 +12,6 @@ public:
     int GetKey();
 
 signals:
-    void KeyClicked(int key);
-    void KeyPressed(int key);
     void KeyReleased(int key);
     
 private:
@@ -21,9 +19,12 @@ private:
     void InitConnect();
 
 public slots:
-    virtual void SlotKeyClicked(); // 按键按下
-    virtual void SlotCapsSwitch(bool state); // 大写开启、关闭
-    virtual void SlotShiftSwitch(bool state);// 字符切换
+    void SlotKeyClicked(); // 按键按下
+
+public:
+    virtual void ResetKey();             // 按键复位
+    virtual void CapsSwitch(bool state); // 大写开启、关闭
+    virtual void ShiftSwitch(bool state);// 字符切换
 
 private:
     class CPrivate;

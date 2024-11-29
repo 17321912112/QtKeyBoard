@@ -8,9 +8,11 @@ public:
     LetterKeyButton(QWidget* parent = nullptr);
 
 public slots:
-    void SlotKeyClicked() override; // 按键按下
-    void SlotCapsSwitch(bool state) override; // 大小写切换
-    void SlotShiftSwitch(bool state) override;// 字符切换
+    // void SlotKeyClicked() override; // 按键按下
+public:
+    void CapsSwitch(bool state) override; // 大小写切换
+    void ShiftSwitch(bool state) override;// 字符切换
+    void ResetKey() override; // 重置按键
 };
 
 #endif // LETTERKEYBUTTON_H

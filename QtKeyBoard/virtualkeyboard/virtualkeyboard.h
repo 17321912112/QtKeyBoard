@@ -12,7 +12,7 @@ public:
     
     static VirtualKeyBoard* GetInstance();
 
-    languageLayout* GetLayout();
+    LanguageLayout* GetLayout();
 
     void InstallKeyBoard(QApplication *app);  // 安装虚拟键盘
 

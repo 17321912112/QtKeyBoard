@@ -3,15 +3,19 @@
 
 #include <QObject>
 #include <QMap>
+#include <QApplication>
+#include <QDebug>
+#include <QWidget>
+#include <windows.h>
 
 namespace KeyBoard
 {
-
-    void ClickKey(int vk_code);
-
-    void PressKey(int vk_code);
-
-    void ReleaseKey(int vk_code);
+    enum LanguageType
+    {
+        Language_English = 0,
+        Language_Chinese,
+        Language_Unknown,
+    };
 
     enum KeyType
     {
@@ -183,21 +187,56 @@ namespace KeyBoard
         Key_NONAME = 0xFC,
         Key_PA1 = 0xFD,
         Key_OEM_CLEAR = 0xFE,
+
+        Key_Unknown = -1
     };
 
     const QMap<QChar, QChar> ShiftMap = {
         {'1', '!'}, {'2', '@'}, {'3', '#'}, {'4', '$'}, {'5', '%'}, {'6', '^'},
         {'7', '&'}, {'8', '*'}, {'9', '('}, {'0', ')'}, {'\'', '"'}, {'-', '_'},
         {'=', '+'}, {'[', '{'}, {']', '}'}, {'\\', '|'}, {';', ':'}, {'\'', '"'},
-        {',', '<'}, {'.', '>'}, {'/', '?'}
+        {',', '<'}, {'.', '>'}, {'/', '?'}, {'`', '~'}
     };
 
     const QMap<QChar, QChar> ShiftMapRevert = {
         {'!', '1'}, {'@', '2'}, {'#', '3'}, {'$', '4'}, {'%', '5'}, {'^', '6'},
         {'&', '7'}, {'*', '8'}, {'(', '9'}, {')', '0'}, {'"', '\''}, {'_', '-'},
         {'+', '='}, {'{', '['}, {'}', ']'}, {'|', '\\'}, {':', ';'}, {'"', '\''},
-        {'<', ','}, {'>', '.'}, {'?', '/'}
+        {'<', ','}, {'>', '.'}, {'?', '/'}, {'~', '`'}
     };
+
+//    const QMap<QChar, QChar> ChineseCharMap = {
+//        {'`', '~'}, {'1', '！'}, {'2', '@'}, {'3', '#'}, {'4', '￥'}, {'5', '%'},
+//        {'6', '……'}, {'7', '&'}, {'8', '*'}, {'9', '（'}, {'0', '）'}, {'-', '——'},
+//        {'=', '+'}, {';', '；'}, {'\'', '：'}, {'[', '【'}, {']', '】'}, {'\\', '、'},
+//        {',', '，'}, {'.', '。'}, {'/', '？'}
+//    };
+
+//    const QMap<QChar, QChar> ChineseCharMapRevert = {
+//        {'~', '`'}, {'！', '1'}, {'@', '2'}, {'#', '3'}, {'￥', '4'}, {'%', '5'},
+//        {'……', '6'}, {'&', '7'}, {'*', '8'}, {'（', '9'}, {'）', '0'}, {'——', '-'},
+//        {'+', '='}, {'；', ';'}, {'：', '\''}, {'【', '['}, {'】', ']'}, {'、', '\\'},
+//        {',', ','}, {'.', '.'}, {'？', '/'}
+//    };
+
+    void ClickKey(int vk_code);
+
+    void PressKey(int vk_code);
+
+    void ReleaseKey(int vk_code);
+
+    bool GetKeyOpenState(int vk_code);
+
+    bool IsCharKey(int vk_code); // 返回是否是字符按键 如 '1 !' '2 @' '; :'
+
+    bool IsLetterKey(int vk_code); // 返回是否是字母按键 如 'a A' 'b B' 'c C'
+
+    // 定义一个函数来获取当前窗口的输入法上下文
+    HIMC GetActiveIMMContext();
+
+    bool GetConversionMode(DWORD &dwConversionMode);
+
+    LanguageType GetLanguageState(); // 获取语言状态是否为英文
 
     class InputMethodMgr : public QObject
     {

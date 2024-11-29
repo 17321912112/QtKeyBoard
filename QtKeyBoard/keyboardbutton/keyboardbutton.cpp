@@ -1,13 +1,14 @@
 #include "keyboardbutton.h"
 
 #include "inputmethodcontroller/inputmethodmgr.h"
-
+#include <QDebug>
 
 class KeyBoardButton::CPrivate
 {
 public:
     CPrivate(KeyBoardButton* parent)
         : mParent(parent)
+        , mKey(KeyBoard::Key_Unknown)
     {
 
     }
@@ -28,7 +29,6 @@ KeyBoardButton::KeyBoardButton(QWidget* parent)
     ,md(new CPrivate(this))
 {
     InitUI();
-    // InitConnect();
 }
 
 
@@ -58,9 +58,11 @@ void KeyBoardButton::SlotKeyClicked()
 {
     int keyCode = GetKey();
     KeyBoard::ClickKey(keyCode);
+    emit KeyReleased(keyCode);
+    qDebug() << "KeyBoardButton::SlotKeyClicked" << keyCode;
 }
 
-void KeyBoardButton::SlotCapsSwitch(bool state)
+void KeyBoardButton::CapsSwitch(bool state)
 {
     if (this->text().size() == 1)
     {
@@ -77,7 +79,7 @@ void KeyBoardButton::SlotCapsSwitch(bool state)
     }
 }
 
-void KeyBoardButton::SlotShiftSwitch(bool state)
+void KeyBoardButton::ShiftSwitch(bool state)
 {
     if (this->text().size() == 1)
     {
@@ -92,4 +94,9 @@ void KeyBoardButton::SlotShiftSwitch(bool state)
 
         }
     }
+}
+
+void KeyBoardButton::ResetKey()
+{
+
 }

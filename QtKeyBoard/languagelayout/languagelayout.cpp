@@ -7,11 +7,12 @@
 #include <windows.h>
 
 #include <QMap>
+#include <QKeyEvent>
 #include <QDebug>
-class languageLayout::CPrivate
+class LanguageLayout::CPrivate
 {
 public:
-    CPrivate(languageLayout* parent)
+    CPrivate(LanguageLayout* parent)
         : mParent(parent)
         , ui(new Ui::VirtualKeyBoardForm)
         , mShiftPressed(false)
@@ -22,9 +23,9 @@ public:
 
     void InitChinese();
 
-    void Reset();
+    void Reset(); // 键盘复位
 
-    languageLayout* mParent;
+    LanguageLayout* mParent;
     Ui::VirtualKeyBoardForm *ui;
     QList<KeyBoardButton*> mKeyList;
     QMap<KeyBoard::KeyType, KeyBoardButton*> mKeyMap; // 按键映射
@@ -35,25 +36,23 @@ private slots:
     void Hide();
 };
 
-void languageLayout::CPrivate::Reset()
+void LanguageLayout::CPrivate::Reset()
 {
-    if (mShiftPressed)
+    if (mShiftPressed)   // Shift状态判断
     {
         KeyBoard::ReleaseKey(KeyBoard::Key_LSHIFT);
         mShiftPressed = false;
-        for (KeyBoardButton *btn : mKeyList)
-        {
-            btn->SlotShiftSwitch(false);
-        }
     }
-    if (mCapsLockPressed)
+    mCapsLockPressed = KeyBoard::GetKeyOpenState(KeyBoard::Key_CAPITAL); // 获取键盘CapsLock状态
+    if (mCapsLockPressed) // CapsLock状态判断
     {
         KeyBoard::ClickKey(KeyBoard::Key_CAPITAL);
         mCapsLockPressed = false;
-        for (KeyBoardButton *btn : mKeyList)
-        {
-            btn->SlotShiftSwitch(false);
-        }
+    }
+
+    for (KeyBoardButton* btn : mKeyList)
+    {
+        btn->ResetKey();
     }
 
     ui->key_lshift->setStyleSheet("QPushButton{background-color: rgb(255, 255, 255);}");
@@ -61,7 +60,7 @@ void languageLayout::CPrivate::Reset()
     ui->key_capsLock->setStyleSheet("QPushButton{background-color: rgb(255, 255, 255);}");
 }
 
-void languageLayout::CPrivate::InitChinese()
+void LanguageLayout::CPrivate::InitChinese()
 {
     // 初始化按键映射
     mKeyMap = 
@@ -82,27 +81,39 @@ void languageLayout::CPrivate::InitChinese()
         {KeyBoard::Key_SPACE, ui->key_space},
 
         /*{KeyBoard::Key_LSHIFT, ui->key_lshift}, {KeyBoard::Key_RSHIFT, ui->key_rshift},{KeyBoard::Key_CAPITAL, ui->key_capsLock},*/ 
-        {KeyBoard::Key_BACK, ui->key_backSpace}, {KeyBoard::Key_TAB, ui->key_tab}, {KeyBoard::Key_RETURN, ui->key_enter}, 
-        // {KeyBoard::Key_CONVERT, ui->key_convert},  输入法转换
+         {KeyBoard::Key_TAB, ui->key_tab}, {KeyBoard::Key_RETURN, ui->key_enter}, 
+        // {KeyBoard::Key_CONVERT, ui->key_convert},  输入法转换 {KeyBoard::Key_BACK, ui->key_backSpace},
         {KeyBoard::Key_ESCAPE, ui->key_cancel},
         // {KeyBoard::Key_}
         {KeyBoard::Key_OEM_PLUS, ui->key_plus}, {KeyBoard::Key_OEM_MINUS, ui->key_minus},  {KeyBoard::Key_OEM_COMMA, ui->key_comma},
-        {KeyBoard::Key_OEM_PERIOD, ui->key_dot_2}, {KeyBoard::Key_OEM_1, ui->key_semicolon},
-        {KeyBoard::Key_OEM_2, ui->key_slash}, {KeyBoard::Key_OEM_3, ui->key_quotation},
-        {KeyBoard::Key_OEM_4, ui->key_lbracket}, {KeyBoard::Key_OEM_5, ui->key_backslash}, {KeyBoard::Key_OEM_6, ui->key_rbracket},
+        {KeyBoard::Key_OEM_PERIOD, ui->key_decimal}, {KeyBoard::Key_OEM_1, ui->key_semicolon},
+        {KeyBoard::Key_OEM_2, ui->key_divide}, {KeyBoard::Key_OEM_3, ui->key_backTick}, {KeyBoard::Key_OEM_4, ui->key_lbracket}, 
+        {KeyBoard::Key_OEM_5, ui->key_backslash}, {KeyBoard::Key_OEM_6, ui->key_rbracket}, {KeyBoard::Key_OEM_7, ui->key_quote}
         
     };
-
-    // 切换按键处理
-    connect(ui->key_switch, &QPushButton::clicked, [this](){
+    // 删除键
+    connect(ui->key_backSpace, &QPushButton::pressed, [](){
+        KeyBoard::ClickKey(KeyBoard::Key_BACK);
+    });
+    // 全选
+    connect(ui->key_selectAll, &QPushButton::clicked, [](){
+        KeyBoard::PressKey(KeyBoard::Key_LCONTROL);
+        KeyBoard::PressKey(KeyBoard::Key_A);
+        KeyBoard::ReleaseKey(KeyBoard::Key_LCONTROL);
+        KeyBoard::ReleaseKey(KeyBoard::Key_A);
+    });
+    // 切换输入法
+    connect(ui->key_switch, &QPushButton::clicked, [](){
         KeyBoard::PressKey(KeyBoard::Key_LSHIFT);
         KeyBoard::PressKey(KeyBoard::Key_LCONTROL);
         KeyBoard::ReleaseKey(KeyBoard::Key_LSHIFT);
         KeyBoard::ReleaseKey(KeyBoard::Key_LCONTROL);
     });
 
-    connect(ui->key_EN, &QPushButton::clicked, [this](){
+    // 切换中英文
+    connect(ui->key_EN, &QPushButton::clicked, [](){
         KeyBoard::ClickKey(KeyBoard::Key_LSHIFT);
+        KeyBoard::GetLanguageState();
     });
     
     // 普通按键处理
@@ -113,25 +124,33 @@ void languageLayout::CPrivate::InitChinese()
         mKeyList << btn;
     }
 
+    for (KeyBoardButton *btn : mKeyList)
+    {
+        connect(btn, &KeyBoardButton::KeyReleased, mParent, &LanguageLayout::SlotKeyClicked);
+    }
+
+    // 绑定shift和capslock按键
     mKeyList << ui->key_lshift << ui->key_rshift << ui->key_capsLock;
 
+    // Shift按键 capsLock按键事件
     for (KeyBoardButton *btn : mKeyList)
     {
         if (btn->text() == "Shift")
         {
-            connect(btn, &QPushButton::clicked, mParent, &languageLayout::SlotShiftSwitch);
+            connect(btn, &QPushButton::clicked, mParent, &LanguageLayout::SlotShiftSwitch);
         }
         else if (btn->text() == "Caps Lock")
         {
-            connect(btn, &QPushButton::clicked, mParent, &languageLayout::SlotCapsSwitch);
+            connect(btn, &QPushButton::clicked, mParent, &LanguageLayout::SlotCapsSwitch);
         }
         else
         {
             connect(btn, &QPushButton::clicked, btn, &KeyBoardButton::SlotKeyClicked);
+            connect(btn, &KeyBoardButton::KeyReleased, mParent, &LanguageLayout::SlotKeyClicked);
         }
     }
 
-    // 特殊按键处理
+    // 隐藏
     connect(ui->hide, &QPushButton::clicked, [this](){
         if (!mParent->isVisible())
         {
@@ -144,7 +163,7 @@ void languageLayout::CPrivate::InitChinese()
     });
 }
 
-void languageLayout::CPrivate::Hide()
+void LanguageLayout::CPrivate::Hide()
 {
     if (!mParent->isVisible())
     {
@@ -156,7 +175,7 @@ void languageLayout::CPrivate::Hide()
     }
 }
 
-languageLayout::languageLayout(QWidget *parent)
+LanguageLayout::LanguageLayout(QWidget *parent)
     : QWidget(parent)
     , md(new CPrivate(this))
 {
@@ -173,47 +192,104 @@ languageLayout::languageLayout(QWidget *parent)
 
 }
 
-void languageLayout::showEvent(QShowEvent *event)
+void LanguageLayout::showEvent(QShowEvent *event)
 {
     md->Reset();
     QWidget::showEvent(event);
 }
 
-void languageLayout::SlotCapsSwitch(void)
+void LanguageLayout::SlotCapsSwitch(void)
 {
-    md->mCapsLockPressed = !md->mCapsLockPressed;
-    KeyBoardButton *btn = md->ui->key_capsLock;
-    if (md->mCapsLockPressed) // 变为按下状态
+    if (md->mCapsLockPressed)
     {
-        KeyBoard::ClickKey(KeyBoard::Key_CAPITAL);
-        btn->setStyleSheet("QPushButton{background-color: rgb(255, 255, 255);border: 2px solid rgb(0, 0, 0);}");
+        CapsLockRelease();
     }
     else
     {
-        KeyBoard::ClickKey(KeyBoard::Key_CAPITAL);
-        btn->setStyleSheet("QPushButton{background-color: rgb(255, 255, 255);}");
-    }
-    for (KeyBoardButton *btn : md->mKeyList)
-    {
-        btn->SlotCapsSwitch(md->mCapsLockPressed);
+        CapsLockPress();
     }
 }
-void languageLayout::SlotShiftSwitch(void)
+void LanguageLayout::SlotShiftSwitch(void)
 {
-    md->mShiftPressed = !md->mShiftPressed;
-    KeyBoardButton *btn = md->ui->key_lshift;
-    if (md->mShiftPressed) // 变为按下状态
+    if (md->mShiftPressed) 
     {
-        KeyBoard::PressKey(KeyBoard::Key_LSHIFT);
-        btn->setStyleSheet("QPushButton{background-color: rgb(255, 255, 255);border: 2px solid rgb(0, 0, 0);}");
+        ShiftRelease();
     }
     else
     {
-        KeyBoard::ReleaseKey(KeyBoard::Key_LSHIFT);
-        btn->setStyleSheet("QPushButton{background-color: rgb(255, 255, 255);}");
+        ShiftPress();
     }
+}
+
+void LanguageLayout::SlotKeyClicked(int keyCode)
+{
+    if (md->mShiftPressed && (KeyBoard::IsCharKey(keyCode) || KeyBoard::IsLetterKey(keyCode)) )
+    {
+        ShiftRelease();
+    }
+}
+
+void LanguageLayout::ShiftPress()
+{
+    qDebug() << "ShiftPress";
+    KeyBoard::PressKey(KeyBoard::Key_LSHIFT);
+    md->mShiftPressed = true;
     for (KeyBoardButton *btn : md->mKeyList)
     {
-        btn->SlotShiftSwitch(md->mShiftPressed);
+        btn->ShiftSwitch(true);
     }
+    md->ui->key_lshift->setStyleSheet("QPushButton{background-color: rgb(255, 255, 255);border: 2px solid rgb(0, 0, 0);}");
+    md->ui->key_rshift->setStyleSheet("QPushButton{background-color: rgb(255, 255, 255);border: 2px solid rgb(0, 0, 0);}");
+}
+
+void LanguageLayout::CapsLockPress()
+{
+    md->mCapsLockPressed = !md->mCapsLockPressed;
+    KeyBoard::ClickKey(KeyBoard::Key_CAPITAL);
+    md->ui->key_capsLock->setStyleSheet("QPushButton{background-color: rgb(255, 255, 255);border: 2px solid rgb(0, 0, 0);}");
+    for (KeyBoardButton *btn : md->mKeyList)
+    {
+        btn->CapsSwitch(md->mCapsLockPressed);
+    }
+}
+
+void LanguageLayout::ShiftRelease()
+{
+    qDebug() << "ShiftRelease";
+    KeyBoard::ReleaseKey(KeyBoard::Key_LSHIFT);
+    md->mShiftPressed = false;
+    for (KeyBoardButton *btn : md->mKeyList)
+    {
+        btn->ShiftSwitch(false);
+    }
+    md->ui->key_lshift->setStyleSheet("QPushButton{background-color: rgb(255, 255, 255);}");
+    md->ui->key_rshift->setStyleSheet("QPushButton{background-color: rgb(255, 255, 255);}");
+}
+
+void LanguageLayout::CapsLockRelease()
+{
+    md->mCapsLockPressed = !md->mCapsLockPressed;
+    KeyBoard::ClickKey(KeyBoard::Key_CAPITAL);
+    md->ui->key_capsLock->setStyleSheet("QPushButton{background-color: rgb(255, 255, 255);}");
+    for (KeyBoardButton *btn : md->mKeyList)
+    {
+        btn->CapsSwitch(md->mCapsLockPressed);
+    }
+}
+
+void LanguageLayout::hideEvent(QHideEvent *event)
+{
+    md->Reset();
+    QWidget::hideEvent(event);
+}
+
+
+void LanguageLayout::keyPressEvent(QKeyEvent *event)
+{
+    
+}
+
+void LanguageLayout::keyReleaseEvent(QKeyEvent *event)
+{
+
 }

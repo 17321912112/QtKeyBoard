@@ -1,4 +1,5 @@
 QT       += core gui
+QT       += axcontainer
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -24,6 +25,10 @@ HEADERS += \
 
 FORMS += \
     mainwindow.ui
+
+
+LIBS += -limm32 # 使用windows输入法相关库
+
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

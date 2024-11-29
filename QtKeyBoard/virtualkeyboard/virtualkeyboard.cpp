@@ -16,12 +16,12 @@ public:
     }
     void InitUi();
     VirtualKeyBoard* mParent;
-    languageLayout* mLayout;
+    LanguageLayout* mLayout;
 };
 
 void VirtualKeyBoard::CPrivate::InitUi()
 {
-    mLayout = new languageLayout();
+    mLayout = new LanguageLayout();
 }
 
 VirtualKeyBoard *VirtualKeyBoard::mKeyBoard = nullptr;
@@ -45,7 +45,7 @@ VirtualKeyBoard *VirtualKeyBoard::GetInstance()
     return mKeyBoard;
 }
 
-languageLayout* VirtualKeyBoard::GetLayout()
+LanguageLayout* VirtualKeyBoard::GetLayout()
 {
     return md->mLayout;
 }
@@ -58,7 +58,7 @@ void VirtualKeyBoard::InstallKeyBoard(QApplication *app)
            QWindow *focusWindow = app->focusWindow();
            if (focusWindow && app->focusWidget() && !md->mLayout->isVisible()) {
                QRect rect = app->inputMethod()->cursorRectangle().toRect().translated(focusWindow->position()); // 获取光标位置
-               QPoint pos = rect.bottomLeft() + QPoint(0, 5); //
+               QPoint pos = rect.bottomLeft() + QPoint(0, 10); //
                QScreen *screen = app->screenAt(pos); // 获取当前屏幕
                if (screen == Q_NULLPTR)
                    screen = app->primaryScreen();
