@@ -2,7 +2,7 @@
 
 #include <QDebug>
 
-#include "inputmethodmgr.h"
+#include "inputmethod.h"
 
 
 LetterKeyButton::LetterKeyButton(QWidget* parent)

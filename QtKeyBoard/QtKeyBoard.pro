@@ -35,8 +35,5 @@ qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
-
-include($$PWD/keyboardbutton/keyboardbutton.pri)
 include($$PWD/virtualkeyboard/virtualkeyboard.pri)
-include($$PWD/languagelayout/languagelayout.pri)
-include($$PWD/inputmethodcontroller/inputmethodmgr.pri)
+

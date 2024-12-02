@@ -7,5 +7,4 @@ HEADERS += \
     $$PWD/languagelayout.h
 
 FORMS += \
-    $$PWD/keyboarddialog.ui \
     $$PWD/keyboardform.ui \

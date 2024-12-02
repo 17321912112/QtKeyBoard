@@ -26,13 +26,16 @@ protected:
     void keyPressEvent(QKeyEvent *event) override; // 监听系统某些按键是否被按下
 
 signals:
-    void CapsLockSwitched(bool state); // 大小写布局切换
-    void ShiftSwitched(bool state);    // Shift切换
+    // 大小写布局切换,通知按钮改变显示按键
+    void CapsLockSwitched(bool state); 
+    // Shift切换,通知按钮改变显示按键
+    void ShiftSwitched(bool state);    
 
 public slots:
     void SlotCapsSwitch(void);
     void SlotShiftSwitch(void);
     void SlotKeyClicked(int keyCode);
+    void SlotSwitchLanguage();
 
 private:
     void ShiftPress();

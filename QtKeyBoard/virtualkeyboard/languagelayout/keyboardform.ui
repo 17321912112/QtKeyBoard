@@ -13,6 +13,18 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true">QPushButton{
+    background-color: #f0f0f0;
+    border: 1px solid #d3d3d3;
+    border-radius: 4px;
+    padding: 5px 10px;
+    color: #333;
+    font-size: 14px;
+    cursor: pointer;
+ 	font-size: 14px;
+}</string>
+  </property>
   <widget class="CharKeyButton" name="key_4">
    <property name="geometry">
     <rect>
@@ -1415,12 +1427,12 @@
   <customwidget>
    <class>KeyBoardButton</class>
    <extends>QPushButton</extends>
-   <header location="global">keyboardbutton.h</header>
+   <header>keyboardbutton.h</header>
   </customwidget>
   <customwidget>
    <class>CharKeyButton</class>
    <extends>QPushButton</extends>
-   <header location="global">charkeybutton.h</header>
+   <header>charkeybutton.h</header>
   </customwidget>
   <customwidget>
    <class>LetterKeyButton</class>

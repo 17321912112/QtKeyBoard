@@ -1,0 +1,62 @@
+classDiagram
+    class VirtualKeyBoard{
+        +InstallKeyBoard()
+        +LanguageLayout* layout
+    }
+    VirtualKeyBoard --> LanguageLayout : "contains"
+
+    class LanguageLayout{
+        +HandleKeyEvent()
+        +SwitchLanguage()
+        +UpdateKeyState()
+    }
+    LanguageLayout --> CharKeyButton : "interacts with"
+    LanguageLayout --> KeyBoardButton : "interacts with"
+
+    class KeyBoardButton{
+        +QPushButton* button
+        +SetKeyCode()
+        +HandleKeyPress()
+        +HandleKeyRelease()
+        +CapsSwitch()
+        +ShiftSwitch()
+    }
+
+    class CharKeyButton{
+        +KeyBoardButton* button
+        +CapsSwitch()
+        +ShiftSwitch()
+        +ResetKey()
+        +LanguageSwitch()
+    }
+    CharKeyButton --> KeyBoardButton : "inherits from"
+
+    class LetterKeyButton{
+        +KeyBoardButton* button
+        +CapsSwitch()
+        +ShiftSwitch()
+        +ResetKey()
+    }
+    LetterKeyButton --> KeyBoardButton : "inherits from"
+
+    class KeyBoard{
+        +ClickKey(int vk_code)
+        +PressKey(int vk_code)
+        +ReleaseKey(int vk_code)
+        +GetKeyOpenState(int vk_code)
+        +IsCharKey(int vk_code)
+        +IsLetterKey(int vk_code)
+        +SetConversionMode(DWORD dwConversionMode)
+        +GetActiveIMMContext()
+        +GetConversionMode(DWORD &dwConversionMode)
+        +GetLanguageState()
+        +IsIMEOpen()
+        +SetIMEOpenStatus(bool isOpen)
+        +MicroSoftSwitch()
+    }
+
+    VirtualKeyBoard --> KeyBoard : "uses"
+    LanguageLayout --> KeyBoard : "uses"
+    KeyBoardButton --> KeyBoard : "uses"
+    CharKeyButton --> KeyBoard : "uses"
+    LetterKeyButton --> KeyBoard : "uses"

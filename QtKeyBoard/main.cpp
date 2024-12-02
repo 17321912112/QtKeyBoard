@@ -9,7 +9,7 @@
 #include <QInputMethodEvent>
 #include <QList>
 #include <QDebug>
-#include "virtualkeyboard/virtualkeyboard.h"
+#include "virtualkeyboard.h"
 #include "keyboardbutton.h"
 
 #define TEST
@@ -31,7 +31,6 @@ int main(int argc, char *argv[])
     VirtualKeyBoard *keyBoard = VirtualKeyBoard::GetInstance();
 
     keyBoard->InstallKeyBoard(&a);
-
 
 #endif
 

@@ -9,18 +9,16 @@ class VirtualKeyBoard : public QObject
 {
     Q_OBJECT
 public:
-    
     static VirtualKeyBoard* GetInstance();
 
     LanguageLayout* GetLayout();
 
     void InstallKeyBoard(QApplication *app);  // 安装虚拟键盘
 
+    void SetLanguage(int language);  // TODO : 设置键盘语言
+
+    
 signals:
-    void send_preedit(const QString &text);
-
-    void send_commit(const QString &text);
-
     void keyClicked();
 
 private:

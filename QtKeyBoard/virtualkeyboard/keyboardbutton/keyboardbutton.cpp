@@ -49,10 +49,10 @@ void KeyBoardButton::InitUI()
     this->setFont(QFont("Microsoft YaHei", 15, QFont::Bold));
 }
 
-void KeyBoardButton::InitConnect()
-{
-    connect(this, &QPushButton::clicked, this, &KeyBoardButton::SlotKeyClicked);
-}
+// void KeyBoardButton::InitConnect()
+// {
+//     connect(this, &QPushButton::clicked, this, &KeyBoardButton::SlotKeyClicked);
+// }
 
 void KeyBoardButton::SlotKeyClicked()
 {
@@ -64,36 +64,12 @@ void KeyBoardButton::SlotKeyClicked()
 
 void KeyBoardButton::CapsSwitch(bool state)
 {
-    if (this->text().size() == 1)
-    {
-        QChar ch = QChar(this->text().front());
-        if (ch.isLower())
-        {
-            this->setText(ch.toUpper());
-        } else if (ch.isUpper())
-        {
-            this->setText(ch.toLower());
-        } else {
-
-        }
-    }
+    
 }
 
 void KeyBoardButton::ShiftSwitch(bool state)
 {
-    if (this->text().size() == 1)
-    {
-        QChar ch = QChar(this->text().front());
-        if (ch.isLower())
-        {
-            this->setText(ch.toUpper());
-        } else if (ch.isUpper())
-        {
-            this->setText(ch.toLower());
-        } else {
-
-        }
-    }
+    
 }
 
 void KeyBoardButton::ResetKey()
