@@ -12,7 +12,7 @@ public:
     int GetKey();
 
 signals:
-    void KeyReleased(int key);
+    void SignalKeyReleased(int key);
 
 private:
     // 设置按键的字符，样式

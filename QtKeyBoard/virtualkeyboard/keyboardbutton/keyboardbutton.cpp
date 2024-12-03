@@ -1,6 +1,6 @@
 #include "keyboardbutton.h"
 
-#include "inputmethodcontroller/inputmethodmgr.h"
+#include "inputmethod.h"
 #include <QDebug>
 
 class KeyBoardButton::CPrivate
@@ -12,17 +12,10 @@ public:
     {
 
     }
-    void InitUi();
 
     KeyBoardButton* mParent;
     KeyBoard::KeyType mKey;
 };
-
-void KeyBoardButton::CPrivate::InitUi()
-{
-    // 按键默认样式
-
-}
 
 KeyBoardButton::KeyBoardButton(QWidget* parent)
     :QPushButton(parent)
@@ -58,7 +51,7 @@ void KeyBoardButton::SlotKeyClicked()
 {
     int keyCode = GetKey();
     KeyBoard::ClickKey(keyCode);
-    emit KeyReleased(keyCode);
+    emit SignalKeyReleased(keyCode);
     qDebug() << "KeyBoardButton::SlotKeyClicked" << keyCode;
 }
 

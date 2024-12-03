@@ -2,8 +2,9 @@
 #define VIRTUALKEYBOARD_H
 
 #include <QObject>
-#include "languagelayout.h"
-
+#include "inputmethod.h"
+#include "abstractlayout.h"
+#include "keyboardlayoutfactory.h"
 
 class VirtualKeyBoard : public QObject
 {
@@ -11,23 +12,21 @@ class VirtualKeyBoard : public QObject
 public:
     static VirtualKeyBoard* GetInstance();
 
-    LanguageLayout* GetLayout();
+    AbstractLayout* GetLayout();
 
     void InstallKeyBoard(QApplication *app);  // 安装虚拟键盘
 
-    void SetLanguage(int language);  // TODO : 设置键盘语言
+    void SetLanguage(KeyBoard::Language language);
 
-    
 signals:
-    void keyClicked();
+    // void keyClicked();
 
 private:
     explicit VirtualKeyBoard(QObject *parent = nullptr);
 
 private:
     static VirtualKeyBoard *mKeyBoard; // 虚拟键盘
-    class CPrivate;
-    CPrivate *const md;
+    AbstractLayout* mLayout;
 };
 
 #endif // VIRTUALKEYBOARD_H

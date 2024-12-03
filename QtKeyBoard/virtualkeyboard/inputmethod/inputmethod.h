@@ -10,11 +10,18 @@
 
 namespace KeyBoard
 {
-    enum LanguageType
+    enum Language  // 键盘语言
     {
-        Language_English = 0,
-        Language_Chinese,
-        Language_Unknown,
+        Language_English, 
+        Language_Chinese, 
+        Language_Unknown, 
+    };
+
+    enum LayoutMode // 键盘布局语言状态(Shift切换)
+    {
+        Mode_English,
+        Mode_Chinese,
+        Mode_Unknown,
     };
 
     enum KeyType
@@ -272,7 +279,7 @@ namespace KeyBoard
     bool GetConversionMode(DWORD &dwConversionMode);
 
     // 获取输入法当前语言状态
-    LanguageType GetLanguageState(); 
+    LayoutMode GetLanguageState(); 
 
     // 获取当前输入法是否打开
     bool IsIMEOpen();

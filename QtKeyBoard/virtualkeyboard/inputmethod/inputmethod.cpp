@@ -125,9 +125,9 @@ namespace KeyBoard
         ImmReleaseContext(GetForegroundWindow(), hIMC);
     }
 
-    LanguageType GetLanguageState()
+    LayoutMode GetLanguageState()
     {
-        LanguageType languageType = LanguageType::Language_Unknown;
+        LayoutMode languageType = LayoutMode::Mode_Unknown;
 
         // 判断当前输入法的中英文状态
         DWORD conversionMode;
@@ -136,12 +136,12 @@ namespace KeyBoard
             if (conversionMode)
             {
                 // qDebug() << "当前处于中文模式";
-                languageType = Language_Chinese; 
+                languageType = Mode_Chinese; 
             }
             else
             {
                 // qDebug() << "当前处于英文模式";
-                languageType = Language_English;
+                languageType = Mode_English;
             }
         } else {
             qDebug() << "无法获取转换模式";
@@ -191,13 +191,13 @@ namespace KeyBoard
         DWORD dwConversionMode = 0x0401;
         switch (l)
         {
-            case KeyBoard::Language_Chinese:
+            case KeyBoard::Mode_Chinese:
             {
                 dwConversionMode = 0x0000;
                 KeyBoard::SetConversionMode(dwConversionMode);
                 
             }break;
-            case KeyBoard::Language_English:
+            case KeyBoard::Mode_English:
             {
                 dwConversionMode = 0x0401;
                 KeyBoard::SetConversionMode(dwConversionMode);
