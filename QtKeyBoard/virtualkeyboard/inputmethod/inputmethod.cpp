@@ -46,6 +46,37 @@ namespace KeyBoard
         return GetKeyState(vk_code) & 0x0001 ? true : false; // 按键状态
     }
 
+    void HandleBackspace()
+    {
+        if (IsIMEOpen()) {
+            DWORD conversionMode;
+            if (GetConversionMode(conversionMode)) {
+                // 如果 IME 处于组合字符模式
+                if (conversionMode & 0x400) 
+                {
+                    // 调用 IME 的方法来处理退格键
+                    HWND hwnd = GetForegroundWindow();
+                    if (hwnd) 
+                    {
+                        SendMessage(hwnd, WM_IME_NOTIFY, IMN_SETCONVERSIONMODE, 0);
+                        SendMessage(hwnd, WM_IME_NOTIFY, IMN_CLOSESTATUSWINDOW, 0);
+                    }
+                } 
+                else 
+                {
+                    // 如果 IME 不处于组合字符模式，按普通退格键处理
+                    PressKey(VK_BACK);
+                    ReleaseKey(VK_BACK);
+                }
+            }
+        } 
+        else 
+        {
+            // 如果 IME 关闭，按普通退格键处理
+            ClickKey(VK_BACK);
+        }
+    }
+
     bool IsCharKey(int vk_code)
     {
         bool res = false;
@@ -71,7 +102,8 @@ namespace KeyBoard
 
 
     // 获取当前窗口的输入法上下文
-    HIMC GetActiveIMMContext() {
+    HIMC GetActiveIMMContext() 
+    {
         HWND hwnd = GetForegroundWindow(); // 获取当前激活的窗口句柄
         // qDebug() << "hwnd:" << hwnd;
         if (!hwnd) return NULL;
@@ -80,7 +112,6 @@ namespace KeyBoard
 
     // 获取当前输入法的中英文模式
     /*
-        dwConversionMode
         dwConversionMode 表示输入法的转换模式，即输入法当前的输入状态。它是一个位标志，可以组合使用多个标志来表示不同的输入模式。常见的标志包括：
         IME_CMODE_ALPHANUMERIC (0x0000)：字母数字模式（英文模式）。
         IME_CMODE_NATIVE (0x0001)：本地模式（中文模式）。
@@ -121,15 +152,23 @@ namespace KeyBoard
         ImmGetConversionStatus(hIMC, &con, &dwSentenceMode);
         // qDebug() << "set conversion mode:" << dwConversionMode;
         BOOL result = ImmSetConversionStatus(hIMC, dwConversionMode, dwSentenceMode);
-        qDebug() << "SetConversionMode result:" << result;
+        if (!result)
+        {
+            qDebug() << "SetConversionMode result failed";
+        }
         ImmReleaseContext(GetForegroundWindow(), hIMC);
+    }
+
+    LayoutMode GetLanguage()
+    {
+        return CURRENT_LANGUAGE;
     }
 
     LayoutMode GetLanguageState()
     {
         LayoutMode languageType = LayoutMode::Mode_Unknown;
 
-        // 判断当前输入法的中英文状态
+        // 判断微软输入法的中英文状态
         DWORD conversionMode;
         if (GetConversionMode(conversionMode)) 
         {
@@ -157,7 +196,10 @@ namespace KeyBoard
         if (!hIMC) return false;
 
         BOOL isOpen = ImmGetOpenStatus(hIMC);
-        qDebug() << "IME Open Status: " << (isOpen ? "Open" : "Closed");
+        if (!isOpen)
+        {
+//            qDebug() << "IME Open Status: " << (isOpen ? "Open" : "Closed");
+        }
 
         ImmReleaseContext(GetForegroundWindow(), hIMC);
         return isOpen == TRUE;
@@ -171,7 +213,10 @@ namespace KeyBoard
         if (!hIMC) return false;
 
         BOOL result = ImmSetOpenStatus(hIMC, isOpen);
-        qDebug() << "Set IME Open Status to " << (isOpen ? "Open" : "Closed") << " Result: " << (result ? "Success" : "Failed");
+        if (!result)
+        {
+//            qDebug() << "Set IME Open Status to " << (isOpen ? "Open" : "Closed") << " Result: " << (result ? "Success" : "Failed");
+        }
 
         ImmReleaseContext(GetForegroundWindow(), hIMC);
         return result == TRUE;
@@ -187,7 +232,7 @@ namespace KeyBoard
             }
         }
         auto l = KeyBoard::GetLanguageState();
-        // qDebug() << "before: Switch"; 
+        // 中英文切换
         DWORD dwConversionMode = 0x0401;
         switch (l)
         {
@@ -201,32 +246,280 @@ namespace KeyBoard
             {
                 dwConversionMode = 0x0401;
                 KeyBoard::SetConversionMode(dwConversionMode);
-               
             }break;
             default:
                 break;
         }
-        // qDebug() << "after: Switch"; 
         KeyBoard::GetLanguageState();
     }
 
-//    class InputMethodMgr::CPrivate
-//    {
-//    public:
-//        CPrivate(InputMethodMgr* mParent)
-//            :mParent(mParent)
-//        {
+    // 搜狗输入法中文
+    void SetSogouChinese()
+    {
+        SetIMEOpenStatus(true);
+        SetConversionMode(0x0401);
+        CURRENT_LANGUAGE = LayoutMode::Mode_Chinese;
+    }
 
-//        }
+    // 搜狗输入法英文
+    void SetSogouEnglish()
+    {
+        SetIMEOpenStatus(false);
+        SetConversionMode(0x0000);
+        CURRENT_LANGUAGE = LayoutMode::Mode_English;
+    }
 
-//        InputMethodMgr *mParent;
-//    };
+    void SogouSwitch()
+    {
+        if (CURRENT_LANGUAGE == LayoutMode::Mode_Chinese)
+        {
+            SetSogouEnglish();
+        }
+        else if (CURRENT_LANGUAGE == LayoutMode::Mode_English)
+        {
+            SetSogouChinese();
+        }
+    }
+
+    void getPreeditCandidates()
+    {
+        HWND hwnd = GetForegroundWindow(); 
+        HIMC hIMC = ImmGetContext(hwnd);
+        if (hIMC == NULL) {
+//            qDebug() << "Failed to get input context";
+            return;
+        }
+
+        unsigned long dwListCount = 0;
+        if (ImmGetCandidateListCountA(hIMC, &dwListCount) == 0) {
+            ImmReleaseContext(hwnd, hIMC);
+//            qDebug() << "Failed to get candidate list count";
+            return;
+        }
+
+        for (UINT i = 0; i < dwListCount; ++i) {
+            CANDIDATELIST list;
+            if (ImmGetCandidateListA(hIMC, i, &list, sizeof(list)) == 0) {
+//                qDebug() << "Failed to get candidate list" << i;
+                continue;
+            }
+
+            for (UINT j = 0; j < list.dwCount; ++j) {
+//                qDebug() << "Candidate" << j << ":" << QString::fromWCharArray((wchar_t*)list.dwOffset[j]);
+            }
+        }
+
+        ImmReleaseContext(hwnd, hIMC);
+    }
+
+    
+    QUuid GetCurrentIMEGuid()
+    {
+        HWND hwnd = GetForegroundWindow();
+        HIMC hIMC = ImmGetContext(hwnd);
+        if (!hIMC) 
+        {
+            qDebug() << "Failed to get input context";
+            return QUuid();
+        }
+
+         // 获取当前线程的键盘布局
+        HKL hkl = GetKeyboardLayout(0);
+        qDebug() << "Current HKL:" << hkl;
+        if (hkl == NULL) 
+        {
+            qDebug() << "Failed to get HKL";
+            ImmReleaseContext(hwnd, hIMC);
+            return QUuid();
+        }
+
+         // 获取输入法的描述信息
+        WCHAR description[256];
+        if (ImmGetDescription(hkl, description, 256) == 0)
+        {
+            DWORD error = GetLastError();
+            qDebug() << "Failed to get IME description, Error code" << error;
+            ImmReleaseContext(hwnd, hIMC);
+            return QUuid();
+        }
+        
+
+        WCHAR imeFileName[MAX_PATH];
+        if (ImmGetIMEFileName(hkl, imeFileName, MAX_PATH) == 0) 
+        {
+            DWORD error = GetLastError();
+            qDebug() << "Failed to get IME file name, Error code" << error;
+            ImmReleaseContext(hwnd, hIMC);
+            return QUuid();
+        }
+
+        QString imeFilePath = QString::fromWCharArray(imeFileName);
+        qDebug() << "Current IME file path:" << imeFilePath ;
+
+        // 获取输入法的 GUID
+        CLSID clsid;
+        if (CLSIDFromString((LPOLESTR)imeFilePath.utf16(), &clsid) != S_OK) 
+        {
+            qDebug() << "Failed to convert IME file path to CLSID";
+            ImmReleaseContext(hwnd, hIMC);
+            return QUuid();
+        }
+
+        ImmReleaseContext(hwnd, hIMC);
+        return QUuid(clsid);
+    }
+
+    // 判断当前输入法是否是微软拼音输入法
+    bool IsMicrosoftPinyinIME()
+    {
+        QUuid currentIMEGuid = GetCurrentIMEGuid();
+        if (currentIMEGuid.isNull()) 
+        {
+            qDebug() << "Failed to get current IME GUID";
+            return false;
+        }
+
+        qDebug() << "Current IME GUID:" << currentIMEGuid.toString();
+
+        if (currentIMEGuid == MS_PINYIN_GUID) 
+        {
+            qDebug() << "Current IME is Microsoft Pinyin Input Method.";
+            return true;
+        } 
+        else 
+        {
+            qDebug() << "Current IME is not Microsoft Pinyin Input Method.";
+            return false;
+        }
+    }
 
 
-//    InputMethodMgr::InputMethodMgr(QObject *parent)
-//        : QObject(parent)
-//        , md(new CPrivate(this))
-//    {
 
-//    }
+    // void checkCurrentIME()
+    // {
+    //     HWND hwnd = GetForegroundWindow(); 
+    //     HIMC hIMC = ImmGetContext(hwnd);
+    //     if (hIMC == NULL) 
+    //     {
+    //         qDebug() << "Failed to get input context";
+    //         return;
+    //     }
+
+    //     WCHAR imeFileName[MAX_PATH];
+    //     if (ImmGetIMEFileName(hIMC, imeFileName, MAX_PATH) == 0) 
+    //     {
+    //         qDebug() << "Failed to get IME file name";
+    //         ImmReleaseContext(hwnd, hIMC);
+    //         return;
+    //     }
+
+    //     QString imeFilePath = QString::fromWCharArray(imeFileName);
+    //     qDebug() << "Current IME file path:" << imeFilePath;
+
+    //     // 判断是否为搜狗输入法
+    //     if (imeFilePath.contains(L"sogou", Qt::CaseInsensitive)) 
+    //     {
+    //         qDebug() << "Current IME is Sogou Input Method.";
+    //         // 获取搜狗输入法的码
+    //         getSogouPinyinCode(hwnd);
+    //     } 
+    //     else 
+    //     {
+    //         qDebug() << "Current IME is not Sogou Input Method.";
+    //     }
+
+    //     ImmReleaseContext(hwnd, hIMC);
+    // }
+
+    int HookTest()
+    {
+        HMODULE hModule = LoadLibrary(TEXT("hookdll.dll"));
+        if (!hModule)
+        {
+            qDebug() << "Failed to load DLL!";
+            return 1;
+        }
+
+        InstallHookType InstallHook = (InstallHookType)GetProcAddress(hModule, "InstallHook");
+        UninstallHookType UninstallHook = (UninstallHookType)GetProcAddress(hModule, "UninstallHook");
+        GetLastKeyInfoType GetLastKeyInfo = (GetLastKeyInfoType)GetProcAddress(hModule, "GetLastKeyInfo");
+
+        if (!InstallHook || !UninstallHook || !GetLastKeyInfo)
+        {
+            qDebug() << "Failed to get function addresses!";
+            FreeLibrary(hModule);
+            return 1;
+        }
+
+        InstallHook();
+
+        while (true)
+        {
+            int keyInfo = GetLastKeyInfo();
+            int vkCode = keyInfo & 0xFFFF;
+            int isKeyDown = (keyInfo >> 16) & 0x1;
+
+            if (vkCode != 0)
+            {
+                if (isKeyDown)
+                {
+                    qDebug() << "Main program received key press: " << vkCode;
+                }
+                else
+                {
+                    qDebug() << "Main program received key release: " << vkCode;
+                }
+            }
+            Sleep(100); // Sleep for a short time to avoid high CPU usage
+        }
+
+        UninstallHook();
+        FreeLibrary(hModule);
+
+        return 0;
+    }
+
+    Language GetDefaultLanguage()
+    {
+        QString defaultLanguageName;
+        Language defaultLanguage = Language::Language_Unknown;
+        LCID lcid = GetUserDefaultLCID();
+        char buffer[LOCALE_NAME_MAX_LENGTH];
+        if (GetLocaleInfoA(lcid, LOCALE_SENGLANGUAGE, buffer, LOCALE_NAME_MAX_LENGTH)) 
+        {
+            qDebug() << "Language name:" << buffer;
+            defaultLanguageName = buffer;
+        }
+        if (defaultLanguageName.contains("Chinese"))
+        {
+            defaultLanguage = Language::Language_Chinese;
+        }
+        else if (defaultLanguageName.contains("English"))
+        {
+            defaultLanguage = Language::Language_English;
+        }
+        return defaultLanguage;
+    }
+
+   class InputMethodMgr::CPrivate
+   {
+   public:
+       CPrivate(InputMethodMgr* mParent)
+           :mParent(mParent)
+           , mode(LayoutMode::Mode_Unknown)
+       {
+
+       }
+
+       InputMethodMgr *mParent;
+       LayoutMode mode;
+   };
+
+
+   InputMethodMgr::InputMethodMgr(QObject *parent)
+       : QObject(parent)
+       , md(new CPrivate(this))
+   {
+
+   }
 }

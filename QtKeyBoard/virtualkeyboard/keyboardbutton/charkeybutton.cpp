@@ -47,6 +47,10 @@ void CharKeyButton::ResetKey()
     {
         setText(KeyBoard::ChineseMapEnglish[str]);
     }
+    else if (KeyBoard::ChineseCharMapRevertWithoutShift.contains(str))
+    {
+        setText(KeyBoard::ChineseCharMapRevertWithoutShift[str]);
+    }
 }
 
 void CharKeyButton::LanguageSwitch(bool state)
@@ -58,31 +62,39 @@ void CharKeyButton::LanguageSwitch(bool state)
 void CharKeyButton::RefreshText()
 {
     QString str = text();
-    // qDebug() << "是否大写:" << mCapsLockState << "是否英文" << mLanguageState << "是否shift" << mShiftState;
-    if (!mShiftState)
+    if (!mShiftState) // 不开SHIFT
     {
-        ResetKey(); // 直接切换为英文原始字符键
+        if (mLanguageState || mCapsLockState)
+        {
+            ResetKey(); // 直接切换为英文原始字符键码
+        }
+        else if (!mLanguageState && !mCapsLockState)
+        {
+            ResetKey();
+            if (KeyBoard::ChineseCharMapWithoutShift.contains(str))
+            {
+                setText(KeyBoard::ChineseCharMapWithoutShift[str]); // 显示中文字符
+            }
+        }
     } 
-    else if (!mLanguageState && !mCapsLockState) // 小写且中文状态 显示中文字符
+    else // 开SHIFT
     {
-        if (KeyBoard::ChineseCharMap.contains(str))
+        if (!mLanguageState && !mCapsLockState) // 显示中文字符
         {
-            setText(KeyBoard::ChineseCharMap[str]); 
+            ResetKey();
+            if (KeyBoard::ChineseCharMap.contains(str))
+            {
+                setText(KeyBoard::ChineseCharMap[str]); 
+            }
         }
-        else if (KeyBoard::EnglishMapChinese.contains(str))
+        else
         {
-            setText(KeyBoard::EnglishMapChinese[str]);
+            ResetKey();
+            if (KeyBoard::EnglishCharMap.contains(str))
+            {
+                setText(KeyBoard::EnglishCharMap[str]);
+            }
         }
     }
-    else
-    {
-        if (KeyBoard::EnglishCharMap.contains(str))
-        {
-            setText(KeyBoard::EnglishCharMap[str]);
-        }
-        else if (KeyBoard::ChineseMapEnglish.contains(str))
-        {
-            setText(KeyBoard::ChineseMapEnglish[str]);
-        }
-    }
+    
 }

@@ -1,14 +1,14 @@
 INCLUDEPATH +=  $$PWD
 
 SOURCES += \
-    $$PWD/abstractlayout.cpp \
-    $$PWD/keyboardlayoutfactory.cpp \
-    $$PWD/chineselayout.cpp 
+    $$PWD/keyboardform.cpp
 
 HEADERS += \
-    $$PWD/abstractlayout.h \
-    $$PWD/keyboardlayoutfactory.h \
-    $$PWD/chineselayout.h
+    $$PWD/keyboardform.h
 
 FORMS += \
-    $$PWD/keyboardform.ui \
+    $$PWD/virtualkeyboardform.ui
+
+include($$PWD/layout/layout.pri)
+include($$PWD/factory/factory.pri)
+include($$PWD/inputform/inputform.pri)

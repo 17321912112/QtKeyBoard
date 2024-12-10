@@ -19,7 +19,9 @@ int main(int argc, char *argv[])
 
     QWidget widget;
     QMainWindow m;
+    VirtualKeyBoard *keyBoard = VirtualKeyBoard::GetInstance();
 
+    keyBoard->InstallKeyBoard(&a);
 #ifdef TEST
     // 测试代码
     QVBoxLayout *layout = new QVBoxLayout(&widget);
@@ -27,11 +29,6 @@ int main(int argc, char *argv[])
     layout->addWidget(new QTextEdit);
     layout->addWidget(new QLineEdit);
     widget.show();
-
-    VirtualKeyBoard *keyBoard = VirtualKeyBoard::GetInstance();
-
-    keyBoard->InstallKeyBoard(&a);
-
 #endif
 
     return a.exec();

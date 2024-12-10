@@ -3,18 +3,29 @@
 #define CHINESELAYOUT_H
 
 #include "abstractlayout.h"
+#include "inputmethod.h"
 
-namespace Ui {
-class ChineseLayout;
+namespace Ui 
+{
+    class ChineseLayout;
 }
+
+class MyWorker : public QObject 
+{
+    Q_OBJECT
+
+public slots:
+    void RunTask() 
+    {
+        KeyBoard::HookTest();
+    }
+};
 
 class ChineseLayout : public AbstractLayout
 {
     Q_OBJECT
 public:
     explicit ChineseLayout(QWidget *parent = nullptr);
-
-    // void SetCurrentLanguage(QString language) override;
 
 protected:
     void showEvent(QShowEvent *event) override;

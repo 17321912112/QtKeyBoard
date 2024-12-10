@@ -22,6 +22,7 @@ KeyBoardButton::KeyBoardButton(QWidget* parent)
     ,md(new CPrivate(this))
 {
     InitUI();
+    connect(this, &QPushButton::clicked, this, &KeyBoardButton::SlotKeyClicked);
 }
 
 
@@ -49,10 +50,12 @@ void KeyBoardButton::InitUI()
 
 void KeyBoardButton::SlotKeyClicked()
 {
-    int keyCode = GetKey();
-    KeyBoard::ClickKey(keyCode);
-    emit SignalKeyReleased(keyCode);
-    qDebug() << "KeyBoardButton::SlotKeyClicked" << keyCode;
+    if (md->mKey != KeyBoard::Key_Unknown)
+    {
+        KeyBoard::ClickKey(md->mKey);
+//        qDebug() << "KeyBoardButton::SlotKeyClicked" << md->mKey;
+    }
+    emit SignalKeyReleased(md->mKey);
 }
 
 void KeyBoardButton::CapsSwitch(bool state)

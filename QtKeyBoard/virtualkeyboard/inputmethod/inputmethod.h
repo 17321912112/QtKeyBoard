@@ -1,16 +1,25 @@
 #ifndef INPUTMETHOD_H
 #define INPUTMETHOD_H
 
+#include <functional>
+
 #include <QObject>
 #include <QMap>
 #include <QApplication>
 #include <QDebug>
 #include <QWidget>
 #include <windows.h>
+#include <QUuid>
+
+typedef LRESULT (CALLBACK *KeyboardProcType)(int nCode, WPARAM wParam, LPARAM lParam);
+typedef void (*InstallHookType)();
+typedef void (*UninstallHookType)();
+typedef int (*GetLastKeyInfoType)();
+
 
 namespace KeyBoard
 {
-    enum Language  // 键盘语言
+    enum Language  // 键盘多语言
     {
         Language_English, 
         Language_Chinese, 
@@ -195,7 +204,7 @@ namespace KeyBoard
         Key_PA1 = 0xFD,
         Key_OEM_CLEAR = 0xFE,
 
-        Key_Unknown = -1
+        Key_Unknown = 0x0E
     };
 
     // const QMap<QChar, QChar> ShiftMap = {
@@ -212,6 +221,7 @@ namespace KeyBoard
     //     {'<', ','}, {'>', '.'}, {'?', '/'}, {'~', '`'}
     // };
 
+    // 英文 + shift
     const QMap<QString, QString> EnglishCharMap = {
         {"1", "!"}, {"2", "@"}, {"3", "#"}, {"4", "$"}, {"5", "%"}, {"6", "^"},
         {"7", "&"}, {"8", "*"}, {"9", "("}, {"0", ")"}, {"\'", "\""}, {"-", "_"},
@@ -226,39 +236,82 @@ namespace KeyBoard
         {"<", ","}, {">", "."}, {"?", "/"}
     };
 
+    // 中文 + SHIFT
    const QMap<QString, QString> ChineseCharMap = {
         {"1", "！"}, {"2", "@"}, {"3", "#"}, {"4", "￥"}, {"5", "%"}, {"6", "……"},
         {"7", "&"}, {"8", "*"}, {"9", "（"}, {"0", "）"}, {"-", "——"}, {"=", "+"},
-        {"[", "【"}, {"]", "】"}, {"\\", "、"}, {";", "："}, {"'", "‘"}, {",", "《"},
+        {"[", "{"}, {"]", "}"}, {"\\", "|"}, {";", "："}, {"'", "“"}, {",", "《"},
         {".", "》"}, {"/", "？"}
    };
 
    const QMap<QString, QString> ChineseCharMapRevert = {
         {"！", "1"}, {"@", "2"}, {"#", "3"}, {"￥", "4"}, {"%", "5"}, {"……", "6"},
         {"&", "7"}, {"*", "8"}, {"（", "9"}, {"）", "0"}, {"——", "-"}, {"+", "="},
-        {"【", "["}, {"】", "]"}, {"、", "\\"}, {":", ";"}, {"‘", "'"}, {"《", ","},
+        {"{", "["}, {"}", "]"}, {" 、", "\\"}, {":", ";"}, {"“", "'"}, {"《", ","},
         {"》", "."}, {"？", "/"}
    };
 
    const QMap<QString, QString> EnglishMapChinese = {
         {"!", "！"}, {"@", "@" }, {"#", "#"}, {"$", "￥"}, {"%", "%"}, {"^", "……"},
         {"&", "&"}, {"*", "*"}, {"(", "（"}, {")", "）"}, {"_", "——"}, {"+", "+"},
-        {"{", "【"}, {"}", "】"}, {"|", "、"}, {":", "："}, {"\"", "‘"}, {"<", "《"},
+        {"{", "{"}, {"}", "}"}, {"|", "|"}, {":", "："}, {"\"", "“"}, {"<", "《"},
         {">", "》"}, {"?", "？"}
    };
 
    const QMap<QString, QString> ChineseMapEnglish = {
         {"！", "!"}, {"@", "@" }, {"#", "#"}, {"￥", "$"}, {"%", "%"}, {"……", "^"},
-        {"&", "&"}, {"*", "*"}, {"（", "("}, {")", ")"}, {"——", "_"}, {"+", "+"},
-        {"【", "{"}, {"】", "}"}, {"、", "|"}, {"：", ":"}, {"‘", "\""}, {"《", "<"},
-        {"》", ">"}, {"？", "/"}
+        {"&", "&"}, {"*", "*"}, {"（", "("}, {")", "）"}, {"——", "_"}, {"+", "+"},
+        {"{", "{"}, {"}", "}"}, {"|", "|"}, {"：", ":"}, {"“", "\""}, {"《", "<"},
+        {"》", ">"}, {"？", "?"}
    };
+
+   // 中文 不加 SHIFT
+   const QMap<QString, QString> ChineseCharMapWithoutShift = {
+        {"1", "1"}, {"2", "2"}, {"3", "3"}, {"4", "4"}, {"5", "5"}, {"6", "6"},
+        {"7", "7"}, {"8", "8"}, {"9", "9"}, {"0", "0"}, {"-", "-"}, {"=", "="},
+        {"[", "【"}, {"]", "】"}, {"\\", " 、"}, {";", "："}, {"'", "‘"}, {",", "，"},
+        {".", "。"}, {"/", "、"}
+   };
+
+   const QMap<QString, QString> ChineseCharMapRevertWithoutShift = {
+        {"1", "1"}, {"2", "2"}, {"3", "3"}, {"4", "4"}, {"5", "5"}, {"6", "6"},
+        {"7", "7"}, {"8", "8"}, {"9", "9"}, {"0", "0"}, {"——", "-"}, {"+", "="},
+        {"【", "["}, {"】", "]"}, {" 、", "\\"}, {":", ";"}, {"‘", "'"}, {"，", ","},
+        {"。", "."}, {"、", "/"}
+   };
+
+   const QMap<QString, QString> EnglishMapChineseWithoutShift = {
+        {"!", "1"}, {"@", "2"}, {"#", "3"}, {"$", "4"}, {"%", "5"}, {"^", "6"},
+        {"&", "7"}, {"*", "8"}, {"(", "9"}, {")", "0"}, {"_", "-"}, {"+", "="},
+        {"{", "【"}, {"}", "】"}, {"|", " 、"}, {":", "；"}, {"\"", "‘"}, {"<", "，"},
+        {">", "。"}, {"?", "、"}
+   };
+
+   const QMap<QString, QString> ChineseMapEnglishWithoutShift = {
+        {"1", "!"}, {"2", "@" }, {"3", "#"}, {"4", "$"}, {"5", "%"}, {"6", "^"},
+        {"7", "&"}, {"8", "*"}, {"9", "("}, {"0", ")"},{"-", "_"}, {"=", "+"},
+        {"【", "{"}, {"】", "}"}, {" 、", "|"}, {"；", ":"}, {"‘", "\""}, {"，", "<"},
+        {"。", ">"}, {"、", "?"}
+   };
+
+
+    // -=[]\;',./
+    // _+{}:"<>?
+    // -=【】、；，。、
+    // ——+{}|：“《》？
+   const QMap<QString, QString> EnglishMapChineseShift;
+
+   static LayoutMode CURRENT_LANGUAGE = Mode_Unknown;
 
     void ClickKey(int vk_code);
 
     void PressKey(int vk_code);
 
     void ReleaseKey(int vk_code);
+
+    void HandleBackspace();
+    // 获取当前窗口的输入法上下文
+    HIMC GetActiveIMMContext();
 
     // 指定按键码是否处于激活状态，检查系统大小写状态
     bool GetKeyOpenState(int vk_code);
@@ -272,11 +325,11 @@ namespace KeyBoard
     // 以下为windows输入法api调用
     void SetConversionMode(DWORD dwConversionMode);
 
-    // 获取当前窗口的输入法上下文
-    HIMC GetActiveIMMContext();
-
     // 获取输入法当前模式
     bool GetConversionMode(DWORD &dwConversionMode);
+
+    // 获取当前语言
+    LayoutMode GetLanguage();
 
     // 获取输入法当前语言状态
     LayoutMode GetLanguageState(); 
@@ -290,19 +343,47 @@ namespace KeyBoard
     // 微软拼音中英切换
     void MicroSoftSwitch();
 
-    // class InputMethodMgr : public QObject
-    // {
-    //     Q_OBJECT
-    // public:
-    //     explicit InputMethodMgr(QObject *parent = nullptr);
+    // 搜狗输入法中文
+    void SetSogouChinese();
 
-    // signals:
+    // 搜狗输入法英文
+    void SetSogouEnglish();
 
-    // private:
-    //     class CPrivate;
-    //     CPrivate *const md;
+    // 搜狗输入法中英切换
+    void SogouSwitch();
 
-    // };
+    // 候选词
+    void getPreeditCandidates();
+
+    // 微软拼音输入法的 GUID
+    const QUuid MS_PINYIN_GUID("{81D6C9E7-442B-4DD5-BC54-1DB7F509E0FE}");
+
+    // 获取当前输入法的 GUID
+    QUuid GetCurrentIMEGuid();
+
+    // 判断当前输入法是否是微软拼音输入法
+    bool IsMicrosoftPinyinIME();
+
+    // 钩子函数->捕获真实键盘输入
+    int HookTest();
+
+    // 获取地区
+    Language GetDefaultLanguage();
+
+    LRESULT CALLBACK CustomWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+    class InputMethodMgr : public QObject
+    {
+        Q_OBJECT
+    public:
+        explicit InputMethodMgr(QObject *parent = nullptr);
+
+    signals:
+
+    private:
+        class CPrivate;
+        CPrivate *const md;
+    };
 }
 
 #endif // INPUTMETHOD_H

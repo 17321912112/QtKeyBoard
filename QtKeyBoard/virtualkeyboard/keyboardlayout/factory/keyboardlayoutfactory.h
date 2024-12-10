@@ -3,11 +3,12 @@
 #define LANGUAGELAYOUTFACTORY_H
 
 #include "abstractlayout.h"
+#include "inputmethod.h"
 
 class KeyboardLayoutFactory
 {
 public:
-    static AbstractLayout* CreateKeyboardLayout(const QString& type, QWidget* parent = nullptr);
+    static AbstractLayout* CreateKeyboardLayout(const KeyBoard::Language& language, QWidget* parent = nullptr);
 };
 
 #endif // LANGUAGELAYOUTFACTORY_H

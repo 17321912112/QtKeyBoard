@@ -7,13 +7,16 @@
 #include <QHideEvent>
 #include <QKeyEvent>
 
+namespace Ui
+{
+    class AbstractLayout;
+}
+
 class AbstractLayout : public QWidget
 {
     Q_OBJECT
 public:
     explicit AbstractLayout(QWidget *parent = nullptr);
-
-    // virtual void SetCurrentLanguage(QString language) = 0;
 
 protected:
     virtual void showEvent(QShowEvent *event) override;
@@ -24,6 +27,8 @@ protected:
 signals:
     void CapsLockSwitched(bool state);
     void ShiftSwitched(bool state);
+    void BackClicked();
+
 
 public slots:
     virtual void SlotCapsSwitch(void) = 0;
