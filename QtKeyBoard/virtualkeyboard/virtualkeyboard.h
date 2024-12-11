@@ -6,19 +6,22 @@
 #include "inputmethod.h"
 #include "keyboardform.h"
 
+class VirtualKeyBoard;
+
 // 事件过滤器
 class MouseEventFilter : public QObject
 {
     Q_OBJECT
 public:
     explicit MouseEventFilter(QObject *parent = nullptr);
-    void setKeyboard(QWidget *keyboard);
+    void setKeyboard(VirtualKeyBoard *keyboard);
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event) override;
 
 private:
-    QWidget *m_keyboard;
+
+    VirtualKeyBoard *m_keyboard;
 };
 
 class VirtualKeyBoard : public QObject
@@ -28,9 +31,11 @@ public:
     static VirtualKeyBoard* GetInstance();
 
     // 安装虚拟键盘
-    void InstallKeyBoard(QApplication *app);  
+    void InstallKeyBoard();
     // 设置键盘语言
     void SetLanguage(KeyBoard::Language language); 
+
+    friend class MouseEventFilter;
 
 signals:
 
@@ -38,13 +43,17 @@ private:
     explicit VirtualKeyBoard(QObject *parent = nullptr);
 
 private:
-    KeyBoardForm* GetKeyBoardForm();
-
     void InitKeyboardWidget();
 
     void LoadDefaultLayout();
 
     void SyncText(QWidget *focusWidget);
+
+    bool IsEditWidget(QWidget *focusWidget);
+
+    void MoveAndShow();
+
+    KeyBoardForm* GetKeyBoardForm();
 
 private:
     static VirtualKeyBoard *mKeyBoard; // 虚拟键盘

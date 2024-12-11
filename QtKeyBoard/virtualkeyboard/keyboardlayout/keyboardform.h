@@ -28,6 +28,8 @@ public:
     int GetCursorPosition();
     /*--同步输入框--*/
 
+    bool InGeometry(const QPoint &point);
+
 public slots:
     void SlotNewCharacter(const QString& text);
 
@@ -36,6 +38,8 @@ protected:
     void showEvent(QShowEvent *event) override;
 
     void hideEvent(QHideEvent *event) override;
+
+    void moveEvent(QMoveEvent *event) override;
 
 signals:
     void SignalInputChanged(const QString& text);

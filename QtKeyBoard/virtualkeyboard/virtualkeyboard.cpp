@@ -14,7 +14,7 @@ MouseEventFilter::MouseEventFilter(QObject *parent)
 {
 }
 
-void MouseEventFilter::setKeyboard(QWidget *keyboard)
+void MouseEventFilter::setKeyboard(VirtualKeyBoard *keyboard)
 {
     m_keyboard = keyboard;
 }
@@ -24,13 +24,22 @@ bool MouseEventFilter::eventFilter(QObject *obj, QEvent *event)
     if (event->type() == QEvent::MouseButtonPress) 
     {
         QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
-        if (m_keyboard && !m_keyboard->geometry().contains(mouseEvent->globalPos())) 
+        // 如果当前点击的是输入框，呼出键盘
+        if (m_keyboard) 
         {
-            m_keyboard->hide();
+            if (!m_keyboard->GetKeyBoardForm()->isVisible() && m_keyboard->IsEditWidget(qApp->widgetAt(mouseEvent->globalPos())))
+            {
+                m_keyboard->MoveAndShow();
+            }
+            else if (m_keyboard->GetKeyBoardForm()->isVisible() && !m_keyboard->GetKeyBoardForm()->InGeometry(mouseEvent->globalPos()))
+            {
+                m_keyboard->GetKeyBoardForm()->hide();
+            }
         }
     }
     return QObject::eventFilter(obj, event);
 }
+
 
 
 VirtualKeyBoard *VirtualKeyBoard::mKeyBoard = nullptr;
@@ -76,75 +85,35 @@ void VirtualKeyBoard::SetLanguage(KeyBoard::Language language)
 }
 
 
-void VirtualKeyBoard::InstallKeyBoard(QApplication *app)
+void VirtualKeyBoard::InstallKeyBoard()
 {
-    InitKeyboardWidget(); // 安装事件过滤器
+    InitKeyboardWidget();
+
+    qApp->installEventFilter(m_eventFilter); // 安装事件过滤器
 
     // 计算位置 呼出键盘
-    QObject::connect(app->inputMethod(), &QInputMethod::cursorRectangleChanged, this, [&](){
-           QWindow *focusWindow = app->focusWindow();
-        //    mWindow = app->focusWidget();
-           if (focusWindow && app->focusWidget() && !mKeyboardform->isVisible())
-           {
-               SyncText(app->focusWidget());
-               QRect rect = app->inputMethod()->cursorRectangle().toRect().translated(focusWindow->position()); // 获取光标位置
-               QPoint pos = rect.bottomLeft() + QPoint(0, 30); //
-               QScreen *screen = app->screenAt(pos); // 获取当前屏幕
-               if (screen == Q_NULLPTR)
-                   screen = app->primaryScreen();
-
-               if (pos.x() + mKeyboardform->width() > screen->geometry().width())
-               {
-                   pos.setX(screen->geometry().width() - mKeyboardform->width());
-               }
-               if (pos.y() + mKeyboardform->height() > screen->geometry().height())
-               {
-                   pos.setY(screen->geometry().height() - mKeyboardform->height());
-               }
-
-                mKeyboardform->move(pos);
-                mKeyboardform->show();
-                // 移动主窗口以避免被软键盘遮挡
-
-                // 计算软键盘与焦点窗口之间的距离
-                // int x = pos.x() - rect.bottomLeft().x();// > 0 ? rect.x() - pos.x() : rect.x() - pos.x();
-                // int y = pos.y() - rect.bottomLeft().y();// > 0 ? rect.y() - pos.y() : rect.y() - pos.y();
-                // if (focusWindow)
-                // {
-                //     int newX = rect.x(), newY = newY = rect.y();
-                //     if (x < 0)
-                //     {
-                //         newX = focusWindow->x() + x;
-                //     }
-                //     if (y < 0)
-                //     {
-                //         newY = focusWindow->y() + y;
-                //     }
-                //     if (x < 0 || y < 0)
-                //     focusWindow->setPosition(newX, newY);
-                // }
-           }
+    QObject::connect(qApp->inputMethod(), &QInputMethod::cursorRectangleChanged, this, [&](){
+            MoveAndShow();
        });
+
     // 字符显示
     QObject::connect(mKeyboardform, &KeyBoardForm::SignalCommited, [=](const QString &text){
         QInputMethodEvent *event = new QInputMethodEvent;
         event->setCommitString(text);
-        QWidget *focusWindow = app ? app->focusWidget() : Q_NULLPTR;
+        QWidget *focusWindow = qApp ? qApp->focusWidget() : Q_NULLPTR;
         if (focusWindow)
         {
-            app->postEvent(focusWindow, event);
+            qApp->postEvent(focusWindow, event);
         }
     });
 
-    // 安装全局事件过滤器 实现在点击其他位置时隐藏键盘
-    app->installEventFilter(m_eventFilter);
 }
 
 void VirtualKeyBoard::InitKeyboardWidget()
 {
     if (mKeyboardform)
     {
-        m_eventFilter->setKeyboard(mKeyboardform);
+        m_eventFilter->setKeyboard(this);
     }
 }
 
@@ -171,7 +140,6 @@ void VirtualKeyBoard::SyncText(QWidget *focusWidget)
                 mKeyboardform->SetText(text);
                 lineEdit->setCursorPosition(pos);
             });
-//            mTextChangeSignal = connect(mKeyboardform, &KeyBoardForm::SignalInputChanged, lineEdit, &QLineEdit::setText);
             mTextChangeSignal = connect(mKeyboardform, &KeyBoardForm::SignalInputChanged, lineEdit, [=](const QString& text){
                 int pos = mKeyboardform->GetCursorPosition();
                 lineEdit->setText(text);
@@ -210,4 +178,54 @@ void VirtualKeyBoard::SyncText(QWidget *focusWidget)
     }
 
 
+}
+
+bool VirtualKeyBoard::IsEditWidget(QWidget *focusWidget)
+{
+    bool res = false;
+
+    if (QLineEdit* lineEdit = qobject_cast<QLineEdit*>(focusWidget))
+    {
+        if (mKeyboardform->IsValidEdit(lineEdit))  // 不为自己
+        {
+            res = true;
+        }
+    }
+    else if (QTextEdit* textEdit = qobject_cast<QTextEdit*>(focusWidget))
+    {
+        Q_UNUSED(textEdit)
+        res = true;
+    }
+    else if (QPlainTextEdit* plainEdit = qobject_cast<QPlainTextEdit*>(focusWidget))
+    {
+        Q_UNUSED(plainEdit)
+        res = true;
+    }
+    return res;
+}
+
+void VirtualKeyBoard::MoveAndShow()
+{
+    if (!IsEditWidget(qApp->focusWidget()) || !qApp->focusWindow()) return ; // 如果不是输入框则忽略
+
+    SyncText(qApp->focusWidget()); // 同步输入框到键盘预输入处
+
+    QWindow *focusWindow = qApp->focusWindow();
+    QRect rect = qApp->inputMethod()->cursorRectangle().toRect().translated(focusWindow->position()); // 获取光标位置
+    QPoint pos = rect.bottomLeft() + QPoint(0, 30); //
+    QScreen *screen = qApp->screenAt(pos); // 获取当前屏幕
+    if (screen == Q_NULLPTR)
+        screen = qApp->primaryScreen();
+
+    if (pos.x() + mKeyboardform->width() > screen->geometry().width())
+    {
+        pos.setX(screen->geometry().width() - mKeyboardform->width());
+    }
+    if (pos.y() + mKeyboardform->height() > screen->geometry().height())
+    {
+        pos.setY(screen->geometry().height() - mKeyboardform->height());
+    }
+
+     mKeyboardform->move(pos);
+     mKeyboardform->show();
 }

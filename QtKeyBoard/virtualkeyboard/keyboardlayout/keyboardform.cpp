@@ -13,7 +13,7 @@ public:
         : mParent(parent)
         , ui(new Ui::VirtualKeyBoardForm)
         , keyboard(nullptr)
-//        , characterform(new CharacterForm)
+        , characterform(nullptr)
         , input(nullptr)
     {
         ui->setupUi(parent);
@@ -72,6 +72,12 @@ void KeyBoardForm::hideEvent(QHideEvent *event)
     QWidget::hideEvent(event);
 }
 
+void KeyBoardForm::moveEvent(QMoveEvent *event)
+{
+    QWidget::moveEvent(event);
+    md->input->move(this->pos());
+}
+
 void KeyBoardForm::CPrivate::SetLanguage(KeyBoard::Language language)
 {
     // 换上新布局
@@ -116,6 +122,13 @@ void KeyBoardForm::SetCursorPosition(int pos)
 int KeyBoardForm::GetCursorPosition()
 {
     return md->input->GetCursorPosition();
+}
+
+bool KeyBoardForm::InGeometry(const QPoint &point)
+{
+    QRect geomotry = geometry();
+//    geomotry.setY(geomotry.y() - md->input->geometry().height());
+    return geomotry.contains(point);
 }
 
 void KeyBoardForm::SlotNewCharacter(const QString &text)

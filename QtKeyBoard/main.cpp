@@ -20,14 +20,14 @@ int main(int argc, char *argv[])
     QWidget widget;
     QMainWindow m;
     VirtualKeyBoard *keyBoard = VirtualKeyBoard::GetInstance();
-
-    keyBoard->InstallKeyBoard(&a);
+    keyBoard->InstallKeyBoard();
 #ifdef TEST
     // 测试代码
     QVBoxLayout *layout = new QVBoxLayout(&widget);
     layout->addWidget(new QLineEdit);
     layout->addWidget(new QTextEdit);
     layout->addWidget(new QLineEdit);
+    layout->addWidget(new QPushButton);
     widget.show();
 #endif
 

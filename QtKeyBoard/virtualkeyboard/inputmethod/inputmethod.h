@@ -358,12 +358,6 @@ namespace KeyBoard
     // 微软拼音输入法的 GUID
     const QUuid MS_PINYIN_GUID("{81D6C9E7-442B-4DD5-BC54-1DB7F509E0FE}");
 
-    // 获取当前输入法的 GUID
-    QUuid GetCurrentIMEGuid();
-
-    // 判断当前输入法是否是微软拼音输入法
-    bool IsMicrosoftPinyinIME();
-
     // 钩子函数->捕获真实键盘输入
     int HookTest();
 

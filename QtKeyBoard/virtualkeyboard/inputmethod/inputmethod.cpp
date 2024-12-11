@@ -183,7 +183,7 @@ namespace KeyBoard
                 languageType = Mode_English;
             }
         } else {
-            qDebug() << "无法获取转换模式";
+//            qDebug() << "无法获取转换模式";
         }
         
         return languageType;
@@ -310,87 +310,6 @@ namespace KeyBoard
         }
 
         ImmReleaseContext(hwnd, hIMC);
-    }
-
-    
-    QUuid GetCurrentIMEGuid()
-    {
-        HWND hwnd = GetForegroundWindow();
-        HIMC hIMC = ImmGetContext(hwnd);
-        if (!hIMC) 
-        {
-            qDebug() << "Failed to get input context";
-            return QUuid();
-        }
-
-         // 获取当前线程的键盘布局
-        HKL hkl = GetKeyboardLayout(0);
-        qDebug() << "Current HKL:" << hkl;
-        if (hkl == NULL) 
-        {
-            qDebug() << "Failed to get HKL";
-            ImmReleaseContext(hwnd, hIMC);
-            return QUuid();
-        }
-
-         // 获取输入法的描述信息
-        WCHAR description[256];
-        if (ImmGetDescription(hkl, description, 256) == 0)
-        {
-            DWORD error = GetLastError();
-            qDebug() << "Failed to get IME description, Error code" << error;
-            ImmReleaseContext(hwnd, hIMC);
-            return QUuid();
-        }
-        
-
-        WCHAR imeFileName[MAX_PATH];
-        if (ImmGetIMEFileName(hkl, imeFileName, MAX_PATH) == 0) 
-        {
-            DWORD error = GetLastError();
-            qDebug() << "Failed to get IME file name, Error code" << error;
-            ImmReleaseContext(hwnd, hIMC);
-            return QUuid();
-        }
-
-        QString imeFilePath = QString::fromWCharArray(imeFileName);
-        qDebug() << "Current IME file path:" << imeFilePath ;
-
-        // 获取输入法的 GUID
-        CLSID clsid;
-        if (CLSIDFromString((LPOLESTR)imeFilePath.utf16(), &clsid) != S_OK) 
-        {
-            qDebug() << "Failed to convert IME file path to CLSID";
-            ImmReleaseContext(hwnd, hIMC);
-            return QUuid();
-        }
-
-        ImmReleaseContext(hwnd, hIMC);
-        return QUuid(clsid);
-    }
-
-    // 判断当前输入法是否是微软拼音输入法
-    bool IsMicrosoftPinyinIME()
-    {
-        QUuid currentIMEGuid = GetCurrentIMEGuid();
-        if (currentIMEGuid.isNull()) 
-        {
-            qDebug() << "Failed to get current IME GUID";
-            return false;
-        }
-
-        qDebug() << "Current IME GUID:" << currentIMEGuid.toString();
-
-        if (currentIMEGuid == MS_PINYIN_GUID) 
-        {
-            qDebug() << "Current IME is Microsoft Pinyin Input Method.";
-            return true;
-        } 
-        else 
-        {
-            qDebug() << "Current IME is not Microsoft Pinyin Input Method.";
-            return false;
-        }
     }
 
 
